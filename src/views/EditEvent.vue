@@ -18,9 +18,9 @@ function cloneValues<T>(obj: T): T {
 }
 
 onMounted(() => {
-  const id = route.params.id
+  const id = route.params.id as string
 
-  event.value = store.getEventById(+id)
+  event.value = store.getEventById(id)
 
   if (event.value) {
     eventDraft.value = cloneValues(event.value)
@@ -31,8 +31,8 @@ onMounted(() => {
       name: '',
       description: '',
       bannerUrl: '',
-      endDate: new Date(),
-      startDate: new Date(),
+      endDate: new Date().toISOString(),
+      startDate: new Date().toISOString(),
     }
   }
 })
@@ -45,14 +45,14 @@ function save() {
   if (event.value && eventDraft.value) {
     store.updateEvent(event.value.id, {
       ...eventDraft.value,
-      startDate: new Date(eventDraft.value.startDate),
-      endDate: new Date(eventDraft.value.endDate),
+      startDate: new Date(eventDraft.value.startDate).toISOString(),
+      endDate: new Date(eventDraft.value.endDate).toISOString(),
     })
   } else if (eventDraft.value) {
     store.createEvent({
       ...eventDraft.value,
-      startDate: new Date(eventDraft.value.startDate),
-      endDate: new Date(eventDraft.value.endDate),
+      startDate: new Date(eventDraft.value.startDate).toISOString(),
+      endDate: new Date(eventDraft.value.endDate).toISOString(),
     })
   }
   router.push('/events')

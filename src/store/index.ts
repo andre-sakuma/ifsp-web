@@ -9,67 +9,48 @@ import {
 } from '../services/api/interface'
 import { iLectureCreate } from '../services/api/interface'
 import { iCodeResponse } from '../services/api/interface'
+import { useDatabaseList } from 'vuefire'
+import firebase from '../plugins/firebase'
 
 export const useStore = defineStore('store', () => {
-  const courses = ref<iCourseResponse[]>([
-    {
-      id: 1,
-      class: '1A',
-      period: '2020/2021',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 2,
-      class: '1B',
-      period: '2020/2021',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 3,
-      class: '1C',
-      period: '2020/2021',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 4,
-      class: '1D',
-      period: '2020/2021',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 5,
-      class: '1E',
-      period: '2020/2021',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ])
-  const events = ref<iEventResponse[]>([
-    ...Array.from({ length: 15 }, (_, i) => ({
-      id: i + 1,
-      name: `Event ${i + 1}`,
-      description: `Event ${i + 1} description`,
-      startDate: new Date(),
-      endDate: new Date(),
-      bannerUrl: 'https://picsum.photos/200/300',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })),
-  ])
-  const lectures = ref<iLectureResponse[]>([])
-  const codes = ref<iCodeResponse[]>([])
+  const database = firebase.useDatabase()
 
-  const coursesIncrement = ref(5)
-  const eventsIncrement = ref(15)
-  const lecturesIncrement = ref(0)
-  const codesIncrement = ref(0)
+  const users = useDatabaseList<{
+    email: string
+    password: string
+  }>(firebase.setGetter(database, 'users'))
+
+  const signedIn = ref(false)
+
+  function login() {
+    // const isValid =
+    //   users.value.find((user) => user.email === email)?.password === password
+
+    signedIn.value = true
+    localStorage.setItem('isSignedIn', 'true')
+  }
+
+  function logout() {
+    signedIn.value = false
+    localStorage.removeItem('isSignedIn')
+  }
+
+  const courses = useDatabaseList<iCourseResponse>(
+    firebase.setGetter(database, 'courses')
+  )
+
+  const events = useDatabaseList<iEventResponse>(
+    firebase.setGetter(database, 'events')
+  )
+  const lectures = useDatabaseList<iLectureResponse>(
+    firebase.setGetter(database, 'lectures')
+  )
+  const codes = useDatabaseList<iCodeResponse>(
+    firebase.setGetter(database, 'codes')
+  )
 
   function timeUniqueRandomNumber() {
-    return new Date().getTime() + Math.floor(Math.random() * 1000)
+    return new Date().toISOString()
   }
 
   function generateUniqueHash() {
@@ -78,14 +59,18 @@ export const useStore = defineStore('store', () => {
     return hash.replace(/[^a-z0-9]+/g, '')
   }
 
-  function getCourseById(id: number): iCourseResponse | undefined {
+  function getCourseById(id: string): iCourseResponse | undefined {
+    if (!courses.value) return undefined
     return courses.value.find((course) => course.id === id)
   }
 
   function redeemCode(hash: string, email: string) {
     const code = codes.value.find((code) => code.hash === hash)
     if (code) {
+      if (code.used_by) throw new Error('Code already used')
       code.used_by = email
+
+      firebase.update(database, 'codes', code.id, code)
     }
   }
 
@@ -93,7 +78,7 @@ export const useStore = defineStore('store', () => {
     return codes.value.find((code) => code.hash === hash)
   }
 
-  function generateCodes(lectureId: number) {
+  function generateCodes(lectureId: string) {
     const lecture = lectures.value.find((lecture) => lecture.id === lectureId)
     if (lecture) {
       const codesQuantity = lecture.attendeesQuantity
@@ -101,69 +86,76 @@ export const useStore = defineStore('store', () => {
         const hash = generateUniqueHash()
 
         return {
-          id: ++codesIncrement.value,
           lectureId: lectureId,
-          used_by: undefined,
           hash: hash,
           url: `/code/${hash}`,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         }
       })
-      codes.value.push(...codesArray)
+
+      for (const code of codesArray) {
+        firebase.writeDB(database, 'codes', code)
+      }
     }
   }
 
-  function deleteCode(id: number) {
+  function deleteCode(id: string) {
     const index = codes.value.findIndex((code) => code.id === id)
     if (index >= 0) {
       codes.value.splice(index, 1)
     }
   }
 
-  function getCodesByLectureId(lectureId: number) {
+  function getCodesByLectureId(lectureId: string) {
     return codes.value.filter((code) => code.lectureId === lectureId)
   }
 
   function createCourse(data: iCourseCreate) {
-    courses.value.push({
+    if (!courses.value) return undefined
+
+    const aux = {
       ...data,
-      id: ++coursesIncrement.value,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    firebase.writeDB(database, 'courses', aux)
   }
 
-  function updateCourse(id: number, data: iCourseCreate) {
+  function updateCourse(id: string, data: iCourseCreate) {
     const course = courses.value.find((course) => course.id === id)
     if (course) {
       course.class = data.class
       course.period = data.period
-      course.updatedAt = new Date()
+      course.updatedAt = new Date().toISOString()
+
+      firebase.update(database, 'courses', id, course)
     }
   }
 
-  function deleteCourse(id: number) {
+  function deleteCourse(id: string) {
+    if (!courses.value) return undefined
     const index = courses.value.findIndex((course) => course.id === id)
     if (index >= 0) {
-      courses.value.splice(index, 1)
+      firebase.writeDB(database, 'courses', courses.value.splice(index, 1))
     }
   }
 
-  function getEventById(id: number): iEventResponse | undefined {
+  function getEventById(id: string): iEventResponse | undefined {
     return events.value.find((event) => event.id === id)
   }
 
   function createEvent(data: iEventCreate) {
-    events.value.push({
+    const aux = {
       ...data,
-      id: ++eventsIncrement.value,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    firebase.writeDB(database, 'events', aux)
   }
 
-  function updateEvent(id: number, data: iEventCreate) {
+  function updateEvent(id: string, data: iEventCreate) {
     const event = events.value.find((event) => event.id === id)
     if (event) {
       event.name = data.name
@@ -171,34 +163,38 @@ export const useStore = defineStore('store', () => {
       event.startDate = data.startDate
       event.endDate = data.endDate
       event.bannerUrl = data.bannerUrl
-      event.updatedAt = new Date()
+      event.updatedAt = new Date().toISOString()
+
+      firebase.update(database, 'events', id, event)
     }
   }
 
-  function deleteEvent(id: number) {
+  function deleteEvent(id: string) {
     const index = events.value.findIndex((event) => event.id === id)
     if (index >= 0) {
       events.value.splice(index, 1)
     }
   }
 
-  function getLectureById(id: number): iLectureResponse | undefined {
+  function getLectureById(id: string): iLectureResponse | undefined {
     return lectures.value.find((lecture) => lecture.id === id)
   }
 
   function createLecture(data: iLectureCreate) {
     const lecture = {
       ...data,
-      id: ++lecturesIncrement.value,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
-    lectures.value.push(lecture)
 
-    generateCodes(lecture.id)
+    firebase.writeDB(database, 'lectures', lecture)
+
+    const lectureId = lectures.value[lectures.value.length - 1].id
+
+    generateCodes(lectureId)
   }
 
-  function updateLecture(id: number, data: iLectureCreate) {
+  function updateLecture(id: string, data: iLectureCreate) {
     const lecture = lectures.value.find((lecture) => lecture.id === id)
     if (lecture) {
       lecture.attendeesQuantity = data.attendeesQuantity
@@ -208,18 +204,20 @@ export const useStore = defineStore('store', () => {
       lecture.description = data.description
       lecture.startDate = data.startDate
       lecture.endDate = data.endDate
-      lecture.updatedAt = new Date()
+      lecture.updatedAt = new Date().toISOString()
+
+      firebase.update(database, 'lectures', id, lecture)
     }
   }
 
-  function deleteLecture(id: number) {
+  function deleteLecture(id: string) {
     const index = lectures.value.findIndex((lecture) => lecture.id === id)
     if (index >= 0) {
       lectures.value.splice(index, 1)
     }
   }
 
-  function getEventLectures(eventId: number) {
+  function getEventLectures(eventId: string) {
     return lectures.value.filter((lecture) => lecture.eventId === eventId)
   }
 
@@ -245,5 +243,8 @@ export const useStore = defineStore('store', () => {
     deleteCode,
     redeemCode,
     getCodeByHash,
+    login,
+    signedIn,
+    logout,
   }
 })

@@ -25,11 +25,11 @@ function cloneValues<T>(obj: T): T {
 }
 
 onMounted(() => {
-  const eventId = route.params.eventId
-  const lectureId = route.params.lectureId
+  const eventId = route.params.eventId as string
+  const lectureId = route.params.lectureId as string
 
-  event.value = store.getEventById(+eventId)
-  lecture.value = store.getLectureById(+lectureId)
+  event.value = store.getEventById(eventId)
+  lecture.value = store.getLectureById(lectureId)
 
   if (lecture.value) {
     lectureDraft.value = cloneValues(lecture.value)
@@ -38,14 +38,14 @@ onMounted(() => {
   if (!lecture.value) {
     lectureDraft.value = {
       attendeesQuantity: 0,
-      eventId: +eventId,
+      eventId: eventId,
       lecturer: '',
       lecturerImage: '',
       location: '',
       subtitle: '',
       description: '',
-      endDate: new Date(),
-      startDate: new Date(),
+      endDate: new Date().toISOString(),
+      startDate: new Date().toISOString(),
     }
   }
 })
@@ -59,14 +59,14 @@ function save() {
   if (lecture.value && lectureDraft.value) {
     store.updateLecture(lecture.value.id, {
       ...lectureDraft.value,
-      startDate: new Date(lectureDraft.value.startDate),
-      endDate: new Date(lectureDraft.value.endDate),
+      startDate: new Date(lectureDraft.value.startDate).toISOString(),
+      endDate: new Date(lectureDraft.value.endDate).toISOString(),
     })
   } else if (lectureDraft.value) {
     store.createLecture({
       ...lectureDraft.value,
-      startDate: new Date(lectureDraft.value.startDate),
-      endDate: new Date(lectureDraft.value.endDate),
+      startDate: new Date(lectureDraft.value.startDate).toISOString(),
+      endDate: new Date(lectureDraft.value.endDate).toISOString(),
     })
   }
   if (!event.value) return
@@ -76,8 +76,11 @@ function save() {
 
 <template>
   <div class="container">
-    <h1 v-if="event">Editando evento {{ event.name }}</h1>
-    <h1 v-else>Criando novo evento</h1>
+    <h1 v-if="event">
+      Editando palestra do {{ lectureDraft?.lecturer }} no evento
+      {{ event.name }}
+    </h1>
+    <h1 v-else>Criando nova palestra</h1>
     <Box style="padding: 30px 40px; flex-direction: column" v-if="lectureDraft">
       <div class="inputs">
         <div style="display: flex; justify-content: space-between; gap: 16px">

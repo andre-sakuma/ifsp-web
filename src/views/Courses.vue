@@ -12,23 +12,15 @@ const store = useStore()
 
 const q = ref('')
 
-onMounted(() => {
-  courses.value = store.courses
-})
-
-const courses = ref<any[]>([])
+const courses = ref<any[]>()
 
 function search() {
+  if (!store.courses) return
   const filteredcourses = store.courses.filter((course) => {
     const qLower = q.value.toLowerCase()
     const classLower = course.class.toLowerCase()
     const periodLower = course.period.toLowerCase()
-    const id = course.id.toString()
-    return (
-      classLower.includes(qLower) ||
-      id.includes(qLower) ||
-      periodLower.includes(qLower)
-    )
+    return classLower.includes(qLower) || periodLower.includes(qLower)
   })
   courses.value = filteredcourses
 }
@@ -70,11 +62,11 @@ function deleteCourse(row: any) {
         @cell-click="handleCellClick"
         :default-sort="{ prop: 'id', order: 'descending' }"
         scrollbar-always-on
-        :data="courses"
+        :data="courses || store.courses"
         style="width: 100%"
         height="calc(100vh - 60px - 24px - 20px - 100px - 16px)"
       >
-        <el-table-column prop="id" sortable label="ID" width="100px" />
+        <el-table-column prop="id" sortable label="ID" />
         <el-table-column prop="class" sortable label="Curso" />
         <el-table-column prop="period" sortable label="Período" />
         <el-table-column fixed="right" label="" width="120">

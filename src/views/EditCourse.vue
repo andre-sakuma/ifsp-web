@@ -19,9 +19,9 @@ function cloneValues<T>(obj: T): T {
 }
 
 onMounted(() => {
-  const id = route.params.id
+  const id = route.params.id as string
 
-  course.value = store.getCourseById(+id)
+  course.value = store.getCourseById(id)
 
   if (course.value) {
     courseDraft.value = cloneValues(course.value)

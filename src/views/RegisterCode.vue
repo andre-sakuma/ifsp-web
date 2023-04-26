@@ -17,46 +17,54 @@ const code = ref<iCodeResponse>()
 const lecture = ref<iLectureResponse>()
 const event = ref<iEventResponse>()
 
-onMounted(() => {
+const isCodeValid = ref<boolean>()
+
+onMounted(async () => {
   const id = route.params.id as string
 
-  if (!id) {
-    router.push('/login')
-    return
-  }
+  await new Promise((resolve) => setTimeout(resolve, 1000))
 
   code.value = store.getCodeByHash(id)
 
   if (!code.value) {
-    router.push('/login')
+    isCodeValid.value = false
     return
   }
 
   lecture.value = store.getLectureById(code.value.lectureId)
 
   if (!lecture.value) {
-    router.push('/login')
+    isCodeValid.value = false
     return
   }
 
   event.value = store.getEventById(lecture.value.eventId)
 
   if (!event.value) {
-    router.push('/login')
+    isCodeValid.value = false
     return
   }
+
+  isCodeValid.value = true
 })
 
 const name = ref('')
 const email = ref('')
 const reason = ref('')
 
+const sucess = ref<boolean>()
+
 function submit() {
   if (!code.value) return
 
-  store.redeemCode(code.value.hash, email.value)
+  try {
+    store.redeemCode(code.value.hash, email.value)
 
-  router.push(`/events/${event.value?.id}/lectures/${lecture.value?.id}/codes`)
+    sucess.value = true
+  } catch (e) {
+    console.error(e)
+    sucess.value = false
+  }
 }
 </script>
 
@@ -67,21 +75,55 @@ function submit() {
         <img class="logo" src="../assets/logo.png" alt="logo" />
       </div>
       <div class="content">
-        <h1>
-          Confirmação de presença
-          <br />{{ lecture?.lecturer }} <br />{{ event?.name }}
-        </h1>
+        <template v-if="isCodeValid === undefined">
+          <div
+            style="height: 24px; width: 200px; margin-bottom: 16px"
+            class="skeleton"
+          ></div>
+          <div
+            style="height: 16px; width: 300px; margin-bottom: 8px"
+            class="skeleton"
+          ></div>
+          <div style="height: 16px; width: 300px" class="skeleton"></div>
+        </template>
+        <template v-else-if="isCodeValid === false">
+          <h1 style="color: var(--red)">Código não encontrado!</h1>
+          <span style="color: var(--red); margin-top: 16px">
+            Tente novamente com outro código ou entre em contato com a
+            organização do evento
+          </span>
+        </template>
+        <template v-else-if="sucess === undefined">
+          <h1>
+            Confirmação de presença
+            <br />
+            <br />{{ lecture?.lecturer }} <br />{{ event?.name }}
+          </h1>
 
-        <span>Nome</span>
-        <el-input v-model="name" />
-        <span style="margin-top: 16px">Email</span>
-        <el-input v-model="email" />
-        <span style="margin-top: 16px">Motivo da participação</span>
-        <el-input type="textarea" v-model="reason" />
+          <span>Nome</span>
+          <el-input v-model="name" />
+          <span style="margin-top: 16px">Email</span>
+          <el-input v-model="email" />
+          <span style="margin-top: 16px">Motivo da participação</span>
+          <el-input type="textarea" v-model="reason" />
 
-        <el-button type="primary" style="margin-top: 16px" @click="submit()">
-          Enviar
-        </el-button>
+          <el-button type="primary" style="margin-top: 16px" @click="submit()">
+            Enviar
+          </el-button>
+        </template>
+        <template v-else-if="sucess === false">
+          <h1 style="color: var(--red)">Esse código já foi utilizado!</h1>
+          <span style="color: var(--red); margin-top: 16px">
+            Tente novamente com outro código ou entre em contato com a
+            organização do evento
+          </span>
+        </template>
+        <template v-else>
+          <h1>Obrigado pela participação!</h1>
+          <span style="margin-top: 16px">
+            Sua presença já foi confirmada.
+          </span>
+        </template>
 
         <!-- <a class="forgot-password-link" href="">Forgot password?</a> -->
       </div>
@@ -92,6 +134,11 @@ function submit() {
 <style scoped>
 h1 {
   font-size: 16px;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #c8d0d8 0%, rgba(200, 208, 216, 0) 100%);
+  animation: blink 1.2s ease-in-out infinite;
 }
 .banner {
   height: 96px;

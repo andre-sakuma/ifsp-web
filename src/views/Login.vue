@@ -1,13 +1,38 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 import { useAPI } from '../plugins/api'
+import { useStore } from '../store'
+import { useRouter } from 'vue-router'
 const api = useAPI()
 
 const username = ref('')
 const password = ref('')
 
+const store = useStore()
+const router = useRouter()
+
+const isValid = ref(false)
+const showErrorMessage = ref(false)
+
+onBeforeMount(() => {
+  const isSignedIn = localStorage.getItem('isSignedIn')
+  if (isSignedIn) {
+    router.push('/events')
+  }
+})
+
 async function login() {
-  const res = await api.auth(username.value, password.value)
+  try {
+    await api.auth(username.value, password.value)
+    store.login()
+
+    isValid.value = true
+    showErrorMessage.value = false
+
+    router.push('/events')
+  } catch (error) {
+    showErrorMessage.value = true
+  }
 }
 </script>
 
@@ -31,6 +56,10 @@ async function login() {
           placeholder="Password"
           v-model="password"
         />
+        <span style="color: var(--red); margin: 16px 0" v-if="showErrorMessage">
+          Credenciais inválidas!
+        </span>
+        <div v-else style="height: 56px; width: 100%"></div>
         <input
           class="login-button"
           type="submit"

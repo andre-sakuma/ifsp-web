@@ -1,28 +1,28 @@
 export interface iEventResponse {
-  id: number
+  readonly id: string
   name: string
   description: string
-  startDate: Date
-  endDate: Date
+  startDate: string
+  endDate: string
   bannerUrl: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: string
+  updatedAt: string
 }
 
 export interface iEventCreate {
   name: string
   description: string
-  startDate: Date
-  endDate: Date
+  startDate: string
+  endDate: string
   bannerUrl: string
 }
 
 export interface iCourseResponse {
-  id: number
+  readonly id: string
   class: string
   period: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: string
+  updatedAt: string
 }
 
 export interface iCourseCreate {
@@ -31,40 +31,40 @@ export interface iCourseCreate {
 }
 
 export interface iLectureResponse {
-  id: number
-  eventId: number
+  readonly id: string
+  eventId: string
   lecturer: string
   location: string
   attendeesQuantity: number
   subtitle: string
   description: string
-  startDate: Date
-  endDate: Date
+  startDate: string
+  endDate: string
   lecturerImage: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: string
+  updatedAt: string
 }
 
 export interface iLectureCreate {
-  eventId: number
+  eventId: string
   lecturer: string
   location: string
   attendeesQuantity: number
   subtitle: string
   description: string
-  startDate: Date
-  endDate: Date
+  startDate: string
+  endDate: string
   lecturerImage: string
 }
 
 export interface iCodeResponse {
-  id: number
+  readonly id: string
   hash: string
   url: string
   used_by?: string
-  lectureId: number
-  createdAt: Date
-  updatedAt: Date
+  lectureId: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface iAtendee {
@@ -76,5 +76,5 @@ export interface iAtendee {
   accepted_terms: boolean
   user_agent: string
   ip: string
-  course_id: number
+  course_id: string
 }

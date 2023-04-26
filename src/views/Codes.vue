@@ -20,10 +20,10 @@ const lectures = ref<iLectureResponse>()
 const codes = ref<iCodeResponse[]>([])
 
 onMounted(() => {
-  const eventId = route.params.eventId
-  const lectureId = route.params.lectureId
-  event.value = store.getEventById(+eventId)
-  lectures.value = store.getLectureById(+lectureId)
+  const eventId = route.params.eventId as string
+  const lectureId = route.params.lectureId as string
+  event.value = store.getEventById(eventId)
+  lectures.value = store.getLectureById(lectureId)
 
   if (!event.value || !lectures.value) {
     router.push('/events')
@@ -62,7 +62,7 @@ function deleteEvent(row: any) {
       >
         <el-table-column prop="id" label="ID" />
         <el-table-column prop="hash" label="Hash" />
-        <el-table-column label="Quem usou" width="120">
+        <el-table-column label="Quem usou">
           <template #default="scope">
             {{ scope.row.used_by ?? 'Ninguém' }}
           </template>

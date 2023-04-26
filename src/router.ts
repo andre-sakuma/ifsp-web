@@ -1,4 +1,8 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import {
+  createRouter,
+  createWebHashHistory,
+  createWebHistory,
+} from 'vue-router'
 import Login from './views/Login.vue'
 
 import Courses from './views/Courses.vue'
@@ -11,6 +15,7 @@ import Codes from './views/Codes.vue'
 import RegisterCode from './views/RegisterCode.vue'
 
 const routes = [
+  { path: '/', redirect: '/events' },
   { name: 'Login', path: '/login', component: Login },
   { name: 'Register Code', path: '/code/:id?', component: RegisterCode },
   {
@@ -28,10 +33,11 @@ const routes = [
   { name: 'Events', path: '/events', component: Events },
   { name: 'Courses Edit', path: '/courses/edit/:id?', component: EditCourse },
   { name: 'Courses', path: '/courses', component: Courses },
+  { path: '/:pathMatch(.*)*', redirect: '/events' },
 ]
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   routes,
 })
 

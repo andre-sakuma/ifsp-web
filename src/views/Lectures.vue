@@ -18,8 +18,8 @@ const endDate = ref('')
 const event = ref<iEventResponse>()
 
 onMounted(() => {
-  const id = route.params.id
-  event.value = store.getEventById(+id)
+  const id = route.params.id as string
+  event.value = store.getEventById(id)
   if (!event.value) {
     router.push('/events')
   } else {
@@ -34,8 +34,8 @@ function updateLectures() {
 
 const lectures = ref<iLectureResponse[]>([])
 
-function prettierDate(date: Date) {
-  return date.toLocaleDateString('pt-BR', {
+function prettierDate(date: string) {
+  return new Date(date).toLocaleDateString('pt-BR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -64,13 +64,13 @@ function search() {
     .filter((lecture) => {
       if (startDate.value && endDate.value) {
         return (
-          lecture.startDate >= new Date(startDate.value) &&
-          lecture.endDate <= new Date(endDate.value)
+          new Date(lecture.startDate) >= new Date(startDate.value) &&
+          new Date(lecture.endDate) <= new Date(endDate.value)
         )
       } else if (startDate.value) {
-        return lecture.startDate >= new Date(startDate.value)
+        return new Date(lecture.startDate) >= new Date(startDate.value)
       } else if (endDate.value) {
-        return lecture.endDate <= new Date(endDate.value)
+        return new Date(lecture.endDate) <= new Date(endDate.value)
       }
       return true
     })

@@ -1,9 +1,24 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
-import { computed } from 'vue'
-
+import { computed, onBeforeMount } from 'vue'
+import { useStore } from './store'
 const route = useRoute()
 const router = useRouter()
+
+const store = useStore()
+
+onBeforeMount(() => {
+  const isSignedIn = localStorage.getItem('isSignedIn')
+  if (!isSignedIn && route.name !== 'Login') {
+    router.push('/login')
+  }
+  store.signedIn = isSignedIn === 'true'
+})
+
+function logout() {
+  store.logout()
+  router.push('/login')
+}
 
 const isLogin = computed(
   () => route.name === 'Login' || route.name === 'Register Code'
@@ -36,7 +51,7 @@ const isLogin = computed(
         </div>
       </div>
       <div class="spacer"></div>
-      <div class="logout-section">
+      <div class="logout-section" @click="logout()">
         <span>Logout</span>
       </div>
     </div>

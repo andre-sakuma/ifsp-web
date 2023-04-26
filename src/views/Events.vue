@@ -13,14 +13,10 @@ const q = ref('')
 const startDate = ref('')
 const endDate = ref('')
 
-onMounted(() => {
-  events.value = store.events
-})
+const events = ref<any[]>()
 
-const events = ref<any[]>([])
-
-function prettierDate(date: Date) {
-  return date.toLocaleDateString('pt-BR', {
+function prettierDate(date: string) {
+  return new Date(date).toLocaleDateString('pt-BR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -43,13 +39,13 @@ function search() {
     .filter((event) => {
       if (startDate.value && endDate.value) {
         return (
-          event.startDate >= new Date(startDate.value) &&
-          event.endDate <= new Date(endDate.value)
+          new Date(event.startDate) >= new Date(startDate.value) &&
+          new Date(event.endDate) <= new Date(endDate.value)
         )
       } else if (startDate.value) {
-        return event.startDate >= new Date(startDate.value)
+        return new Date(event.startDate) >= new Date(startDate.value)
       } else if (endDate.value) {
-        return event.endDate <= new Date(endDate.value)
+        return new Date(event.endDate) <= new Date(endDate.value)
       }
       return true
     })
@@ -105,11 +101,11 @@ function deleteEvent(row: any) {
         @cell-click="handleCellClick"
         :default-sort="{ prop: 'startDate', order: 'descending' }"
         scrollbar-always-on
-        :data="events"
+        :data="events || store.events"
         style="width: 100%"
         height="calc(100vh - 60px - 24px - 20px - 100px - 16px)"
       >
-        <el-table-column prop="id" sortable label="ID" width="180" />
+        <el-table-column prop="id" sortable label="ID" />
         <el-table-column prop="name" sortable label="Evento" width="180" />
         <el-table-column prop="startDate" sortable label="Data de Início">
           <template #default="scope">
