@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
-import { computed, onBeforeMount } from 'vue'
+import { computed, onBeforeMount, onMounted, ref, watch } from 'vue'
 import { useStore } from './store'
 const route = useRoute()
 const router = useRouter()
@@ -9,10 +9,22 @@ const store = useStore()
 
 onBeforeMount(() => {
   const isSignedIn = localStorage.getItem('isSignedIn')
-  if (!isSignedIn && route.name !== 'Login') {
-    router.push('/login')
-  }
   store.signedIn = isSignedIn === 'true'
+})
+
+const loaded = ref<boolean>(false)
+
+onMounted(async () => {
+  await new Promise((res) => setTimeout(res, 200))
+  loaded.value = true
+  if (
+    !store.signedIn &&
+    route.name !== 'Login' &&
+    route.name !== 'Register Code'
+  ) {
+    router.push('/login')
+    return
+  }
 })
 
 function logout() {
@@ -20,13 +32,14 @@ function logout() {
   router.push('/login')
 }
 
-const isLogin = computed(
-  () => route.name === 'Login' || route.name === 'Register Code'
-)
+const isLogin = computed(() => {
+  if (route.name === undefined) return undefined
+  return route.name === 'Login' || route.name === 'Register Code'
+})
 </script>
 
 <template>
-  <div class="app">
+  <div class="app" v-if="loaded">
     <div class="navbar" v-if="!isLogin">
       <img class="logo mb-30" src="./assets/logo.png" />
       <div class="links">
